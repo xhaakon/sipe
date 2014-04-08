@@ -214,9 +214,7 @@ on_stream_info_cb(SIPE_UNUSED_PARAMETER PurpleMedia *media,
 			call->call_hold_cb(call, local, state);
 	} else if (type == PURPLE_MEDIA_INFO_HANGUP || type == PURPLE_MEDIA_INFO_REJECT) {
 		if (!sessionid && !participant) {
-			if (type == PURPLE_MEDIA_INFO_HANGUP && call->call_hangup_cb)
-				call->call_hangup_cb(call, local);
-			else if (type == PURPLE_MEDIA_INFO_REJECT && call->call_reject_cb && !local)
+			if (type == PURPLE_MEDIA_INFO_REJECT && call->call_reject_cb && !local)
 				call->call_reject_cb(call, local);
 		} else if (sessionid && participant) {
 			struct sipe_backend_stream *stream;
