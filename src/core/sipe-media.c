@@ -88,7 +88,7 @@ sipe_media_call_free(struct sipe_media_call_private *call_private)
 		session = sipe_session_find_call(call_private->sipe_private,
 						 call_private->with);
 		if (session)
-			sipe_session_remove(call_private->sipe_private, session);
+			sipe_session_close(call_private->sipe_private, session);
 
 		if (call_private->invitation)
 			sipmsg_free(call_private->invitation);
@@ -682,20 +682,6 @@ static void call_hold_cb(struct sipe_media_call *call,
 				 sipe_media_send_ack);
 }
 
-static void call_hangup_cb(struct sipe_media_call *call, gboolean local)
-{
-	if (local) {
-		struct sipe_media_call_private *call_private = SIPE_MEDIA_CALL_PRIVATE;
-		struct sip_session *session;
-		session = sipe_session_find_call(call_private->sipe_private,
-						 call_private->with);
-
-		if (session) {
-			sipe_session_close(call_private->sipe_private, session);
-		}
-	}
-}
-
 static void
 error_cb(struct sipe_media_call *call, gchar *message)
 {
@@ -743,7 +729,6 @@ sipe_media_call_new(struct sipe_core_private *sipe_private,
 	call_private->public.call_accept_cb         = call_accept_cb;
 	call_private->public.call_reject_cb         = call_reject_cb;
 	call_private->public.call_hold_cb           = call_hold_cb;
-	call_private->public.call_hangup_cb         = call_hangup_cb;
 	call_private->public.error_cb               = error_cb;
 
 	g_free(cname);
