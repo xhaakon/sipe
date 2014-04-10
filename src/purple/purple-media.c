@@ -450,8 +450,7 @@ sipe_backend_media_add_stream(struct sipe_backend_media *media,
 #ifdef HAVE_ICE_TCP
 		g_value_set_uint(&params[1].value,
 				 PURPLE_MEDIA_NETWORK_PROTOCOL_UDP |
-				 PURPLE_MEDIA_NETWORK_PROTOCOL_TCP_ACTIVE |
-				 PURPLE_MEDIA_NETWORK_PROTOCOL_TCP_PASSIVE);
+				 PURPLE_MEDIA_NETWORK_PROTOCOL_TCP);
 #else
 		g_value_set_uint(&params[1].value,
 				 PURPLE_MEDIA_NETWORK_PROTOCOL_UDP);
@@ -986,10 +985,8 @@ sipe_network_protocol_to_purple(SipeNetworkProtocol proto)
 {
 	switch (proto) {
 #ifdef HAVE_ICE_TCP
-		case SIPE_NETWORK_PROTOCOL_TCP_ACTIVE:
-			return PURPLE_MEDIA_NETWORK_PROTOCOL_TCP_ACTIVE;
-		case SIPE_NETWORK_PROTOCOL_TCP_PASSIVE:
-			return PURPLE_MEDIA_NETWORK_PROTOCOL_TCP_PASSIVE;
+		case SIPE_NETWORK_PROTOCOL_TCP:
+			return PURPLE_MEDIA_NETWORK_PROTOCOL_TCP;
 #else
 		case SIPE_NETWORK_PROTOCOL_TCP_ACTIVE:
 		case SIPE_NETWORK_PROTOCOL_TCP_PASSIVE:
@@ -1007,10 +1004,8 @@ purple_network_protocol_to_sipe(PurpleMediaNetworkProtocol proto)
 {
 	switch (proto) {
 #ifdef HAVE_ICE_TCP
-		case PURPLE_MEDIA_NETWORK_PROTOCOL_TCP_ACTIVE:
-			return SIPE_NETWORK_PROTOCOL_TCP_ACTIVE;
-		case PURPLE_MEDIA_NETWORK_PROTOCOL_TCP_PASSIVE:
-			return SIPE_NETWORK_PROTOCOL_TCP_PASSIVE;
+		case PURPLE_MEDIA_NETWORK_PROTOCOL_TCP:
+			return SIPE_NETWORK_PROTOCOL_TCP;
 #else
 		case PURPLE_MEDIA_NETWORK_PROTOCOL_TCP:
 			return SIPE_NETWORK_PROTOCOL_TCP_ACTIVE;

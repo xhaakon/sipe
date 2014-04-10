@@ -398,7 +398,7 @@ AS_IF([test "x$enable_purple" != xno],
 			[
 			 AC_MSG_CHECKING(for TCP media transport)
 			 AC_COMPILE_IFELSE(
-	 			[AC_LANG_PROGRAM([[#include <media.h>]],[[return PURPLE_MEDIA_NETWORK_PROTOCOL_TCP_ACTIVE]])],
+	 			[AC_LANG_PROGRAM([[#include <media.h>]],[[return 0]])],
 				[
 				 with_purple_tcp=yes
 				 AC_DEFINE(HAVE_ICE_TCP, 1, [Define if we have support for TCP media transport.])

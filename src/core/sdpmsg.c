@@ -136,7 +136,7 @@ parse_append_candidate_draft_6(gchar **tokens, GSList *candidates)
 	if (sipe_strequal(tokens[3], "UDP"))
 		candidate->protocol = SIPE_NETWORK_PROTOCOL_UDP;
 	else if (sipe_strequal(tokens[3], "TCP"))
-		candidate->protocol = SIPE_NETWORK_PROTOCOL_TCP_ACTIVE;
+		candidate->protocol = SIPE_NETWORK_PROTOCOL_TCP;
 	else {
 		sdpcandidate_free(candidate);
 		return candidates;
@@ -149,9 +149,9 @@ parse_append_candidate_draft_6(gchar **tokens, GSList *candidates)
 	candidates = g_slist_append(candidates, candidate);
 
 	// draft 6 candidates are both active and passive
-	if (candidate->protocol == SIPE_NETWORK_PROTOCOL_TCP_ACTIVE) {
+	if (candidate->protocol == SIPE_NETWORK_PROTOCOL_TCP) {
 		candidate = sdpcandidate_copy(candidate);
-		candidate->protocol = SIPE_NETWORK_PROTOCOL_TCP_PASSIVE;
+		candidate->protocol = SIPE_NETWORK_PROTOCOL_TCP;
 		candidates = g_slist_append(candidates, candidate);
 	}
 
@@ -169,9 +169,9 @@ parse_append_candidate_rfc_5245(gchar **tokens, GSList *candidates)
 	if (sipe_strequal(tokens[2], "UDP"))
 		candidate->protocol = SIPE_NETWORK_PROTOCOL_UDP;
 	else if (sipe_strequal(tokens[2], "TCP-ACT"))
-		candidate->protocol = SIPE_NETWORK_PROTOCOL_TCP_ACTIVE;
+		candidate->protocol = SIPE_NETWORK_PROTOCOL_TCP;
 	else if (sipe_strequal(tokens[2], "TCP-PASS"))
-		candidate->protocol = SIPE_NETWORK_PROTOCOL_TCP_PASSIVE;
+		candidate->protocol = SIPE_NETWORK_PROTOCOL_TCP;
 	else {
 		sdpcandidate_free(candidate);
 		return candidates;
@@ -430,11 +430,8 @@ candidates_to_string(GSList *candidates, SipeIceVersion ice_version)
 		if (ice_version == SIPE_ICE_RFC_5245) {
 
 			switch (c->protocol) {
-				case SIPE_NETWORK_PROTOCOL_TCP_ACTIVE:
+				case SIPE_NETWORK_PROTOCOL_TCP:
 					protocol = "TCP-ACT";
-					break;
-				case SIPE_NETWORK_PROTOCOL_TCP_PASSIVE:
-					protocol = "TCP-PASS";
 					break;
 				case SIPE_NETWORK_PROTOCOL_UDP:
 					protocol = "UDP";
@@ -487,8 +484,7 @@ candidates_to_string(GSList *candidates, SipeIceVersion ice_version)
 			gchar *password;
 
 			switch (c->protocol) {
-				case SIPE_NETWORK_PROTOCOL_TCP_ACTIVE:
-				case SIPE_NETWORK_PROTOCOL_TCP_PASSIVE: {
+				case SIPE_NETWORK_PROTOCOL_TCP: {
 					GSList *prev_cand = processed_tcp_candidates;
 					for (; prev_cand; prev_cand = prev_cand->next) {
 						struct sdpcandidate *c2 = (struct sdpcandidate *)prev_cand->data;
@@ -619,13 +615,12 @@ media_to_string(const struct sdpmsg *msg, const struct sdpmedia *media)
 		if (media->remote_candidates) {
 			struct sdpcandidate *c = media->remote_candidates->data;
 			uses_tcp_transport =
-				c->protocol == SIPE_NETWORK_PROTOCOL_TCP_ACTIVE ||
-				c->protocol == SIPE_NETWORK_PROTOCOL_TCP_PASSIVE;
+				c->protocol == SIPE_NETWORK_PROTOCOL_TCP;
 			if (uses_tcp_transport) {
 				tcp_setup_str = g_strdup_printf(
 					"a=connection:existing\r\n"
 					"a=setup:%s\r\n",
-					(c->protocol == SIPE_NETWORK_PROTOCOL_TCP_ACTIVE) ? "passive" : "active");
+					"passive");
 			}
 		}
 
