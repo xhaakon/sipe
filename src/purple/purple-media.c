@@ -36,6 +36,7 @@
 
 #include "mediamanager.h"
 #include "agent.h"
+#include "ice-pipeline.h"
 
 #ifdef _WIN32
 /* wrappers for write() & friends for socket handling */
@@ -242,6 +243,9 @@ sipe_backend_media_new(struct sipe_core_public *sipe_public,
 	struct sipe_backend_private *purple_private = sipe_public->backend_private;
 	PurpleMediaManager *manager = purple_media_manager_get();
 	GstElement *pipeline;
+
+	PurpleIcePipeline *pip = purple_ice_pipeline_new(purple_private->account, initiator);
+	g_object_unref(pip);
 
 	media->m = purple_media_manager_create_media(manager,
 						     purple_private->account,
