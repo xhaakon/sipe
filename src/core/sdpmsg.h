@@ -37,6 +37,7 @@ struct sdpmedia {
 	GSList		*remote_candidates;
 
 	guchar		*encryption_key;
+	gboolean	 encryption_active;
 };
 
 struct sdpcandidate {
