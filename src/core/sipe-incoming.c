@@ -284,25 +284,50 @@ static void sipe_invite_mime_cb(gpointer user_data, const GSList *fields,
 }
 #endif
 
+struct sipe_lync_filetransfer_data {
+	gchar *sdp;
+	gchar *file_name;
+	gchar *id;
+	gsize file_size;
+	guint request_id;
+};
+
 static void sipe_invite_mime_mixed_cb(gpointer user_data, const GSList *fields,
-	SIPE_UNUSED_PARAMETER const gchar *body, SIPE_UNUSED_PARAMETER gsize length)
+				      const gchar *body, gsize length)
 {
+	struct sipe_lync_filetransfer_data *ft_data = user_data;
 	const gchar *ctype = sipe_utils_nameval_find(fields, "Content-Type");
 
 	/* Lync 2010 file transfer */
 	if (g_str_has_prefix(ctype, "application/ms-filetransfer+xml")) {
-		struct sipmsg *msg = user_data;
+		sipe_xml *xml = sipe_xml_parse(body, length);
+		const sipe_xml *node;
 
-		sipmsg_remove_header_now(msg, "Content-Type");
-		sipmsg_add_header_now(msg, "Content-Type", ctype);
+		const gchar *request_id_str = sipe_xml_attribute(xml, "requestId");
+		if (request_id_str) {
+			ft_data->request_id = atoi(request_id_str);
+		}
 
-		/* Right now, we do not care about the message body, only detect new
-		 * file transfer protocol from Content-Type and reply with
-		 * 488 Not Acceptable Here to force the old MSOC behavior.
-		 *
-		 * TODO: Extend sipmsg so that it supports multipart messages, as to
-		 * implement the new protocol, we need access to both parts of the
-		 * message for further processing. */
+		node = sipe_xml_child(xml, "publishFile/fileInfo/name");
+		if (node) {
+			ft_data->file_name = sipe_xml_data(node);
+		}
+
+		node = sipe_xml_child(xml, "publishFile/fileInfo/id");
+		if (node) {
+			ft_data->id = sipe_xml_data(node);
+		}
+
+		node = sipe_xml_child(xml, "publishFile/fileInfo/size");
+		if (node) {
+			gchar *size_str = sipe_xml_data(node);
+			if (size_str) {
+				ft_data->file_size = atoi(size_str);
+				g_free(size_str);
+			}
+		}
+	} else if (g_str_has_prefix(ctype, "application/sdp")) {
+		ft_data->sdp = g_strndup(body, length);
 	}
 }
 
@@ -402,15 +427,20 @@ void process_incoming_invite(struct sipe_core_private *sipe_private,
 	}
 #endif
 
-	if (g_str_has_prefix(content_type, "multipart/mixed")) {
-		sipe_mime_parts_foreach(content_type, msg->body, sipe_invite_mime_mixed_cb, msg);
-		/* Reload Content-Type to get type of the selected message part */
-		content_type = sipmsg_find_header(msg, "Content-Type");
-	}
-
 	/* Lync 2010 file transfer */
-	if (g_str_has_prefix(content_type, "application/ms-filetransfer+xml")) {
-		sip_transport_response(sipe_private, msg, 488, "Not Acceptable Here", NULL);
+	if (g_str_has_prefix(content_type, "multipart/mixed")) {
+		struct sipe_lync_filetransfer_data *ft_data =
+				g_new0(struct sipe_lync_filetransfer_data, 1);
+		sipe_mime_parts_foreach(content_type, msg->body, sipe_invite_mime_mixed_cb, ft_data);
+
+		if (!ft_data->file_name || !ft_data->file_size || !ft_data->sdp) {
+			sip_transport_response(sipe_private, msg, 488, "Not Acceptable Here", NULL);
+		}
+
+		g_free(ft_data->file_name);
+		g_free(ft_data->sdp);
+		g_free(ft_data);
+
 		return;
 	}
 
