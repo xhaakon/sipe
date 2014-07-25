@@ -40,6 +40,7 @@
 #include "sipe-core-private.h"
 #include "sipe-dialog.h"
 #include "sipe-ft.h"
+#include "sipe-ft-lync.h"
 #include "sipe-groupchat.h"
 #include "sipe-im.h"
 #include "sipe-incoming.h"
@@ -284,14 +285,6 @@ static void sipe_invite_mime_cb(gpointer user_data, const GSList *fields,
 }
 #endif
 
-struct sipe_lync_filetransfer_data {
-	gchar *sdp;
-	gchar *file_name;
-	gchar *id;
-	gsize file_size;
-	guint request_id;
-};
-
 static void sipe_invite_mime_mixed_cb(gpointer user_data, const GSList *fields,
 				      const gchar *body, gsize length)
 {
@@ -434,12 +427,16 @@ void process_incoming_invite(struct sipe_core_private *sipe_private,
 		sipe_mime_parts_foreach(content_type, msg->body, sipe_invite_mime_mixed_cb, ft_data);
 
 		if (!ft_data->file_name || !ft_data->file_size || !ft_data->sdp) {
-			sip_transport_response(sipe_private, msg, 488, "Not Acceptable Here", NULL);
-		}
+			sip_transport_response(sipe_private, msg, 488,
+					       "Not Acceptable Here", NULL);
+		} else {
+			g_free(msg->body);
+			msg->body = ft_data->sdp;
+			msg->bodylen = strlen(msg->body);
+			ft_data->sdp = NULL;
 
-		g_free(ft_data->file_name);
-		g_free(ft_data->sdp);
-		g_free(ft_data);
+			sipe_ft_lync_init_incoming(sipe_private, msg, ft_data);
+		}
 
 		return;
 	}
@@ -451,8 +448,9 @@ void process_incoming_invite(struct sipe_core_private *sipe_private,
 	}
 
 #ifdef HAVE_VV
-	/* Invitation to audio call */
-	if (msg->body && strstr(msg->body, "m=audio")) {
+	/* Invitation to audio call or file transfer */
+	if (msg->body &&
+	    (strstr(msg->body, "m=audio") || strstr(msg->body, "m=data"))) {
 		process_incoming_invite_call(sipe_private, msg);
 		return;
 	}
