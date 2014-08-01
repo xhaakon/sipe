@@ -126,8 +126,11 @@ backend_candidates_to_sdpcandidate(GList *candidates)
 
 	for (i = candidates; i; i = i->next) {
 		struct sipe_backend_candidate *candidate = i->data;
-		struct sdpcandidate *c = g_new(struct sdpcandidate, 1);
+		struct sdpcandidate *c;
 
+		if (sipe_backend_candidate_get_component_type(candidate) == 2)
+			continue;
+		c = g_new(struct sdpcandidate, 1);
 		c->foundation = sipe_backend_candidate_get_foundation(candidate);
 		c->component = sipe_backend_candidate_get_component_type(candidate);
 		c->type = sipe_backend_candidate_get_type(candidate);
@@ -137,6 +140,28 @@ backend_candidates_to_sdpcandidate(GList *candidates)
 		c->base_ip = sipe_backend_candidate_get_base_ip(candidate);
 		c->base_port = sipe_backend_candidate_get_base_port(candidate);
 		c->priority = sipe_backend_candidate_get_priority(candidate);
+		c->username = sipe_backend_candidate_get_username(candidate);
+		c->password = sipe_backend_candidate_get_password(candidate);
+
+		result = g_slist_insert_sorted(result, c,
+					       (GCompareFunc)candidate_sort_cb);
+	}
+	for (i = candidates; i; i = i->next) {
+		struct sipe_backend_candidate *candidate = i->data;
+		struct sdpcandidate *c;
+
+		if (sipe_backend_candidate_get_component_type(candidate) == 2)
+			continue;
+		c = g_new(struct sdpcandidate, 1);
+		c->foundation = sipe_backend_candidate_get_foundation(candidate);
+		c->component = 2;
+		c->type = sipe_backend_candidate_get_type(candidate);
+		c->protocol = sipe_backend_candidate_get_protocol(candidate);
+		c->ip = sipe_backend_candidate_get_ip(candidate);
+		c->port = sipe_backend_candidate_get_port(candidate);
+		c->base_ip = sipe_backend_candidate_get_base_ip(candidate);
+		c->base_port = sipe_backend_candidate_get_base_port(candidate);
+		c->priority = sipe_backend_candidate_get_priority(candidate) - 1;
 		c->username = sipe_backend_candidate_get_username(candidate);
 		c->password = sipe_backend_candidate_get_password(candidate);
 
@@ -605,6 +630,8 @@ update_remote_media(struct sipe_media_call_private* call_private,
 	for (i = media->candidates; i; i = i->next) {
 		struct sdpcandidate *c = i->data;
 		struct sipe_backend_candidate *candidate;
+		if (c->component != 1)
+			continue;
 		candidate = sipe_backend_candidate_new(c->foundation,
 						       c->component,
 						       c->type,

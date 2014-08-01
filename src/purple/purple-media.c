@@ -859,7 +859,7 @@ sipe_backend_candidate_get_protocol(struct sipe_backend_candidate *candidate)
 	return purple_network_protocol_to_sipe(proto);
 }
 
-static void
+/*static void
 remove_lone_candidate_cb(SIPE_UNUSED_PARAMETER gpointer key,
 			 gpointer value,
 			 gpointer user_data)
@@ -895,7 +895,7 @@ ensure_candidate_pairs(GList *candidates)
 	g_hash_table_destroy(lone_cand_links);
 
 	return candidates;
-}
+}*/
 
 GList *
 sipe_backend_get_local_candidates(struct sipe_backend_media *media,
@@ -913,7 +913,7 @@ sipe_backend_get_local_candidates(struct sipe_backend_media *media,
 	 *
 	 * Remove any incomplete RTP+RTCP candidate pairs from the list.
 	 */
-	candidates = ensure_candidate_pairs(candidates);
+	//candidates = ensure_candidate_pairs(candidates);
 	return candidates;
 }
 
