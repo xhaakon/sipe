@@ -30,6 +30,9 @@ struct sipe_lync_filetransfer_data {
 	gchar *id;
 	gsize file_size;
 	guint request_id;
+
+	struct sipe_core_private *sipe_private;
+	struct sip_dialog *dialog;
 };
 
 void sipe_ft_lync_init_incoming(struct sipe_core_private *sipe_private,
