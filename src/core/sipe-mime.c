@@ -93,7 +93,8 @@ static void gmime_callback(SIPE_UNUSED_PARAMETER GMimeObject *parent,
 			if (length != -1) {
 				gchar *content = g_malloc(length + 1);
 
-				if (g_mime_stream_read(stream, content, length) > 0) {
+				length = g_mime_stream_read(stream, content, length);
+				if (length > 0) {
 					struct gmime_callback_data *cd = user_data;
 					GSList *fields = gmime_fields_to_nameval(part);
 
