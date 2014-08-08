@@ -479,13 +479,69 @@ _stream_readable (PurpleMediaManager *manager, PurpleMedia *media,
 }
 
 static void
+_send_handshake(PurpleMediaManager *manager, PurpleMedia *media,
+              const gchar *session_id, const gchar *participant)
+{
+      guint8 handshake[] = {0x03, 0x00, 0x00, 0x2f, 0x2a, 0xe0, 0x00, 0x00,
+                            0x00, 0x00, 0x00, 0x43, 0x6f, 0x6f, 0x6b, 0x69,
+                            0x65, 0x3a, 0x20, 0x6d, 0x73, 0x74, 0x73, 0x68,
+                            0x61, 0x73, 0x68, 0x3d, 0x73, 0x69, 0x70, 0x3a,
+                            0x6d, 0x61, 0x72, 0x63, 0x2d, 0x0d, 0x0a, 0x01,
+                            0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00};
+      guint8 buffer[2048];
+      gint len;
+      g_debug("*************** SENDING RDP HANDSHAKE ********************");
+      purple_media_manager_send_application_data (manager, media, session_id,
+                                                  participant, handshake,
+                                                  sizeof(handshake), TRUE);
+      g_debug("*************** Reading response ********************");
+
+      len = purple_media_manager_receive_application_data(manager, media, session_id,
+							  participant, buffer, sizeof(buffer), FALSE);
+
+      g_debug("Read %d bytes", len);
+      len = purple_media_manager_receive_application_data(manager, media, session_id,
+							  participant, buffer, 0x10, TRUE);
+      g_debug("Read %d bytes", len);
+      len = purple_media_manager_receive_application_data(manager, media, session_id,
+							  participant, buffer, sizeof(buffer), FALSE);
+
+      g_debug("Read %d bytes", len);
+	
+
+}
+
+struct {
+	PurpleMediaManager *manager;
+	PurpleMedia *media;
+	gchar *session_id;
+	gchar *participant;
+} foobar;
+
+static gboolean
+_send_handshake_cb(gpointer user_data)
+{
+	(void)user_data;
+	_send_handshake(foobar.manager, foobar.media, foobar.session_id, foobar.participant);
+	return FALSE;
+}
+
+static void
 _stream_writable (PurpleMediaManager *manager, PurpleMedia *media,
               const gchar *session_id, const gchar *participant, gboolean writable,
               gpointer user_data)
 {
 	g_debug("**************** STREAM %sWRITABLE ******", writable ? "" : "NOT ");
 
-	(void)user_data;(void)manager;(void)media;(void)session_id;(void)participant;(void)writable;
+	(void)user_data;(void)manager;
+	if (writable && g_strcmp0(session_id, "applicationsharing") == 0) {
+		/* We need to send the data after the reinvite, or need to set the encryption params after the first invite*/
+		foobar.manager = manager;
+		foobar.media = media;
+		foobar.session_id = strdup(session_id);
+		foobar.participant = strdup(participant);
+		g_timeout_add(1000, _send_handshake_cb, NULL);
+	}
 
 }
 
