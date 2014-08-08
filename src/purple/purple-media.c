@@ -410,6 +410,86 @@ sipe_backend_media_relays_free(struct sipe_backend_media_relays *media_relays)
 #endif
 }
 
+static void
+_stream_readable (PurpleMediaManager *manager, PurpleMedia *media,
+                const gchar *session_id, const gchar *participant, gpointer user_data)
+{
+	g_debug("**************** STREAM READABLE ******");
+	(void) manager, (void) media, (void) session_id, (void) participant, (void)user_data;
+	if (g_strcmp0(session_id, "data") == 0) {
+		static FILE *fd = NULL;
+		static guint expecting_len = 0;
+		guint8 buffer[0x800];
+		gint len;
+		guint8 type;
+		guint16 size;
+
+		if (expecting_len == 0) {
+			purple_media_manager_receive_application_data(manager,
+								    media, session_id,
+								    participant,
+								    &type, 1, TRUE);
+			purple_media_manager_receive_application_data(manager,
+								    media, session_id,
+								    participant,
+								    &size, 2, TRUE);
+			size = GUINT16_FROM_BE(size);
+			if (type == 0x01) {
+				gchar *filename;
+
+				purple_media_manager_receive_application_data(manager,
+									      media, session_id,
+									      participant,
+									      buffer, size, TRUE);
+				buffer[size] = 0;
+				g_debug("Received new stream for requestId : %s", buffer);
+				g_assert(fd == NULL);
+				filename = g_strdup_printf("lync-filetransfer-%s.bin", buffer);
+				fd = fopen(filename, "wb");
+				g_free(filename);
+				g_assert(fd != NULL);
+			} else if (type == 0x02) {
+				purple_media_manager_receive_application_data(manager,
+									      media, session_id,
+									      participant,
+									      buffer, size, TRUE);
+				buffer[size] = 0;
+				g_debug("Received end of stream for requestId : %s", buffer);
+				g_assert(fd != NULL);
+				fclose(fd);
+				fd = NULL;
+			} else if (type == 0x00) {
+				g_debug("Received new data chunk of size %d", size);
+				expecting_len = size;
+			}
+			/* Readable will be called again so we can read the rest of the buffer or the chunk */
+		} else {
+			g_assert(fd != NULL);
+			len = purple_media_manager_receive_application_data(manager,
+				    media, session_id, participant, buffer,
+				    expecting_len > sizeof(buffer) ? sizeof(buffer) : expecting_len , FALSE);
+		
+			expecting_len -= len;
+			g_debug("Read %d bytes. %d remaining in chunk", len, expecting_len);
+			fwrite(buffer, len, 1, fd);
+		}
+	} else {
+		/* If we don't read, the callback will be called forever, taking 100% cpu*/
+	}
+}
+
+static void
+_stream_writable (PurpleMediaManager *manager, PurpleMedia *media,
+              const gchar *session_id, const gchar *participant, gboolean writable,
+              gpointer user_data)
+{
+	g_debug("**************** STREAM %sWRITABLE ******", writable ? "" : "NOT ");
+
+	(void)user_data;(void)manager;(void)media;(void)session_id;(void)participant;(void)writable;
+
+}
+
+
 struct sipe_backend_stream *
 sipe_backend_media_add_stream(struct sipe_backend_media *media,
 			      const gchar *id,
@@ -422,6 +502,8 @@ sipe_backend_media_add_stream(struct sipe_backend_media *media,
 	struct sipe_backend_stream *stream = NULL;
 	PurpleMediaSessionType prpl_type = sipe_media_to_purple(type);
 	// Preallocate enough space for all potential parameters to fit.
+	PurpleMediaManager *manager = purple_media_manager_get();
+	PurpleMediaAppDataCallbacks callbacks = {_stream_readable, _stream_writable};
 	GParameter *params = g_new0(GParameter, 5);
 	guint params_cnt = 0;
 	gchar *transmitter;
@@ -464,6 +546,10 @@ sipe_backend_media_add_stream(struct sipe_backend_media *media,
 	}
 
 	ensure_codecs_conf();
+
+	purple_media_manager_set_application_data_callbacks (manager, media->m, id,
+							     participant, &callbacks,
+							     NULL, NULL);
 
 	if (purple_media_add_stream(media->m, id, participant, prpl_type,
 				    initiator, transmitter, params_cnt,
