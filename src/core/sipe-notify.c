@@ -98,7 +98,9 @@ static void sipe_process_provisioning_v2(struct sipe_core_private *sipe_private,
 					"dlxExternalUrl" : "dlxInternalUrl";
 			const gchar *addressbook_uri_str = SIPE_CORE_PRIVATE_FLAG_IS(REMOTE_USER) ?
 					"absExternalServerUrl" : "absInternalServerUrl";
+#ifdef HAVE_VV
 			gchar *ucPC2PCAVEncryption = NULL;
+#endif
 
 			g_free(sipe_private->focus_factory_uri);
 			sipe_private->focus_factory_uri = sipe_xml_data(sipe_xml_child(node, "focusFactoryUri"));
