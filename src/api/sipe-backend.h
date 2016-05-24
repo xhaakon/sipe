@@ -379,6 +379,7 @@ struct sipe_media_stream {
 
 	struct sipe_media_call *call;
 	gchar *id;
+	guint32 ssrc;
 
 	void (*candidate_pairs_established_cb)(struct sipe_media_stream *);
 	void (*read_cb)(struct sipe_media_stream *);
