@@ -667,8 +667,9 @@ gst_bus_cb(GstBus *bus, GstMessage *msg, struct sipe_media_stream *stream)
 	it = gst_element_iterate_src_pads(tee);
 	if (gst_iterator_find_custom(it, (GCompareFunc)find_sinkpad, &val,
 				     sinkpad)) {
-		if (stream->ssrc != 0) {
-			g_object_set(fssession, "ssrc", stream->ssrc, NULL);
+		if (stream->ssrc_range) {
+			g_object_set(fssession,
+				     "ssrc", stream->ssrc_range->begin, NULL);
 		}
 
 		if (purple_media_get_session_type(m, stream->id) == PURPLE_MEDIA_VIDEO) {
