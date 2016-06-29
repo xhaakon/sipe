@@ -269,9 +269,12 @@ static void sipe_purple_chat_menu_join_call_cb(SIPE_UNUSED_PARAMETER PurpleChat 
 static void sipe_purple_chat_menu_show_presentation_cb(SIPE_UNUSED_PARAMETER PurpleChat *chat,
 						       PurpleConversation *conv)
 {
+	SIPE_DEBUG_INFO_NOFORMAT("sipe_purple_chat_menu_show_presentation_cb");
+
 	if (sipe_core_conf_get_presentation_media_call(PURPLE_CONV_TO_SIPE_CORE_PUBLIC,
 						       sipe_purple_chat_get_session(conv))) {
 		// Presentation already connected.
+		SIPE_DEBUG_INFO_NOFORMAT("Presentation already connected");
 		return;
 	}
 
