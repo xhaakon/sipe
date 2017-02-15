@@ -647,6 +647,13 @@ candidate_pairs_established_cb(struct sipe_media_stream *stream)
 		server->mayInteract = FALSE;
 		set_shared_display_area(server, appshare->monitor_id);
 
+		/* Experimentally determined cap on multifrag max request size
+		 * Lync client would accept. Higher values result in a black
+		 * screen being displayed on the remote end.
+		 *
+		 * See related https://github.com/FreeRDP/FreeRDP/pull/3669. */
+		server->settings->MultifragMaxRequestSize = 0x3EFFFF;
+
 		if(shadow_server_init(server) < 0) {
 			server_error = _("Could not initialize RDP server.");
 		} else if(shadow_server_start(server) < 0) {
