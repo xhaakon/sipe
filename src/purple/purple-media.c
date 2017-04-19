@@ -876,10 +876,13 @@ sipe_backend_media_add_stream(struct sipe_media_stream *stream,
 			g_value_set_boolean(&params[params_cnt].value, FALSE);
 			++params_cnt;
 
+// TODO detect if we need this at build time
+#if 0
 			params[params_cnt].name = "reliable";
 			g_value_init(&params[params_cnt].value, G_TYPE_BOOLEAN);
 			g_value_set_boolean(&params[params_cnt].value, TRUE);
 			++params_cnt;
+#endif
 		}
 	} else {
 		// TODO: session naming here, Communicator needs audio/video
