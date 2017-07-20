@@ -907,6 +907,9 @@ GList * sipe_purple_account_options()
 	option = purple_account_option_bool_new(_("Don't publish my calendar information"), "dont-publish", FALSE);
 	options = g_list_append(options, option);
 
+	option = purple_account_option_bool_new(_("Show profile pictures from web\n(potentially dangerous)"), "web-photo-allowed", FALSE);
+	options = g_list_append(options, option);
+
 	option = purple_account_option_string_new(_("Email services URL\n(leave empty for auto-discovery)"), "email_url", "");
 	options = g_list_append(options, option);
 
