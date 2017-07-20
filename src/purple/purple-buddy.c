@@ -345,6 +345,13 @@ gboolean sipe_backend_uses_photo(void)
 	return TRUE;
 }
 
+gboolean sipe_backend_buddy_web_photo_allowed(struct sipe_core_public *sipe_public)
+{
+	PurpleAccount *account = sipe_public->backend_private->account;
+
+	return purple_account_get_bool(account, "web-photo-allowed", FALSE);
+}
+
 void sipe_backend_buddy_set_photo(struct sipe_core_public *sipe_public,
 				  const gchar *who,
 				  gpointer photo_data,

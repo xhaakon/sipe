@@ -750,6 +750,11 @@ gboolean sipe_backend_uses_photo(void)
 	return FALSE;
 }
 
+gboolean sipe_backend_buddy_web_photo_allowed(SIPE_UNUSED_PARAMETER struct sipe_core_public *sipe_public)
+{
+	return FALSE;
+}
+
 void sipe_backend_buddy_set_photo(struct sipe_core_public *sipe_public,
 				  const gchar *who,
 				  gpointer photo_data,
