@@ -22,7 +22,9 @@ function dissectOne(tvbuffer, pinfo, treeitem)
 
   local subtreeitem = treeitem:add(proto, tvbuffer)
   subtreeitem:add(proto.fields.framinglen, frameLenBuffer)
-  subtreeitem:add(proto.fields.data, tvbuffer(pinfo.desegment_offset + 2, frameLen))
+
+  local rtpbuffer = tvbuffer(pinfo.desegment_offset + 2, frameLen)
+  Dissector.get("rtp"):call(rtpbuffer:tvb(), pinfo, subtreeitem)
   bufferBytesLeft = bufferBytesLeft - frameLen
 
   if bufferBytesLeft == 0 then
@@ -38,6 +40,10 @@ end
 function proto.dissector(tvbuffer, pinfo, treeitem)
   pinfo.cols.protocol = "MS TCP"
   while dissectOne(tvbuffer, pinfo, treeitem) do
+  end
+
+  if pinfo.desegment_len > 0 then
+    pinfo.cols.protocol = "MS TCP (multi)"
   end
 end
 
